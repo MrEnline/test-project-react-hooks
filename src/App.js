@@ -1,6 +1,8 @@
+import { useEffect } from 'react';
 import {Component, useState} from 'react';
 import {Container} from 'react-bootstrap';
 import './App.css';
+
 // class Slider extends Component {
 
 //     constructor(props) {
@@ -21,6 +23,14 @@ import './App.css';
 //         this.setState(({autoplay}) => ({
 //             autoplay: !autoplay
 //         }))
+//     }
+
+//     componentDidMount() {
+//         document.title = `Slide: ${this.state.slide}`;
+//     }
+
+//     componentDidUpdate() {
+//         document.title = `Slide: ${this.state.slide}`;
 //     }
 
 //     render() {
@@ -47,19 +57,44 @@ import './App.css';
 // }
 
 
-const calcValue = () => {
-    console.log("random");
+// const calcValue = () => {
+//     console.log("random");
 
-    return Math.random() * (50 - 1) + 1;
-}
+//     return Math.random() * (50 - 1) + 1;
+// }
 
 const Slider = (props) => {
 
-    //const [slide, setSlide] = useState(10);
-    const [slide, setSlide] = useState(calcValue);//calcValue вызовется один раз и при последующих рендерах не будет вызываться
+    const [slide, setSlide] = useState(0);
+    //const [slide, setSlide] = useState(calcValue);//calcValue вызовется один раз и при последующих рендерах не будет вызываться
     //const [slide, setSlide] = useState(() => calcValue());//calcValue вызовется один раз и при последующих рендерах не будет вызываться
     //const [slide, setSlide] = useState(calcValue());//calcValue будет вызываться при каждом рендере. Так делать не стоит. Жрет ресурсы
     const [autoplay, setAutoplay] = useState(false);
+
+    //хук useEffect - можно создавать столько сколько следует для работы
+    //[slide, ...] - массив зависимостей(по умолчанию можно не указывать). Массив параметров при изменении которых вызывается useEffect
+    //если его не задать, то будет выполняться useEffect при каждом рендере
+    //если [] будет пустой, то он useEffect вызовется один раз при первом рендере(действие аналогичное componentDidMount)
+    useEffect(() => {
+        console.log("effect");
+        document.title = `Slide: ${slide}`;
+
+        window.addEventListener("click", logging);
+
+        //выполняет функцию типа ComponentDidUnmount - возвращает функцию при уничтожении компонента Slider
+        return () => {
+            window.removeEventListener("click", logging);
+        }
+
+    }, [slide])
+
+    useEffect(() => {
+        console.log("autoplay");
+    }, [autoplay])
+
+    function logging() {
+        console.log("log");
+    }
 
     //для асинхронной установки состояния и работы с предыдущим значение следует
     //также использовать колбэк как в примере ниже
@@ -108,8 +143,14 @@ const Slider = (props) => {
 
 
 function App() {
-  return (
-        <Slider/>
+
+    const [slider, setSlider] = useState(true);
+
+    return (
+            <>
+                <button onClick={() => setSlider(false)}>click</button>
+                {slider ? <Slider/> : null}
+            </>
   );
 }
 
