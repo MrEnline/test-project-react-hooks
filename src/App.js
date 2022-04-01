@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import {Component, useState} from 'react';
+import {Component, useState, useEffect, useCallback} from 'react';
 import {Container} from 'react-bootstrap';
 import './App.css';
 
@@ -63,6 +62,14 @@ import './App.css';
 //     return Math.random() * (50 - 1) + 1;
 // }
 
+// const getSomeImages = () => {
+//     console.log("Fetching");
+//     return [
+//         "https://www.planetware.com/wpimages/2022/02/france-paris-top-tourist-attractions-eiffel-tower-view.jpg",
+//         "https://www.planetware.com/wpimages/2021/02/france-paris-top-attractions-avenue-champs-elysees.jpg"
+//     ]
+// }
+
 const Slider = (props) => {
 
     const [slide, setSlide] = useState(0);
@@ -72,6 +79,7 @@ const Slider = (props) => {
     const [autoplay, setAutoplay] = useState(false);
 
     //хук useEffect - можно создавать столько сколько следует для работы
+    //useEffect принимает колбэк-функцию, которая вызывается при создании или обновлении компонента
     //[slide, ...] - массив зависимостей(по умолчанию можно не указывать). Массив параметров при изменении которых вызывается useEffect
     //если его не задать, то будет выполняться useEffect при каждом рендере
     //если [] будет пустой, то он useEffect вызовется один раз при первом рендере(действие аналогичное componentDidMount)
@@ -81,7 +89,9 @@ const Slider = (props) => {
 
         window.addEventListener("click", logging);
 
-        //выполняет функцию типа ComponentDidUnmount - возвращает функцию при уничтожении компонента Slider
+        //выполняет функцию типа ComponentDidUnmount - возвращает и выполняет функцию при уничтожении компонента Slider
+        //происходит сброс эффекта
+        //Если ваш эффект возвращает функцию, React выполнит её только тогда, когда наступит время сбросить эффект
         return () => {
             window.removeEventListener("click", logging);
         }
@@ -95,6 +105,17 @@ const Slider = (props) => {
     function logging() {
         console.log("log");
     }
+
+    //для мемоизации функции и вызова ее столько раз, сколько нам надо, а не при каждом рендер
+    //следует использовать хук useCallback и компонент, в который эта функция передается
+    //см. в какой компонент передается в качестве пропса getSomeImages в данном примере
+    const getSomeImages = useCallback(() => {
+        console.log("fetching");
+        return [
+            "https://www.planetware.com/wpimages/2022/02/france-paris-top-tourist-attractions-eiffel-tower-view.jpg",
+            "https://www.planetware.com/wpimages/2021/02/france-paris-top-attractions-avenue-champs-elysees.jpg"
+        ]
+    }, [])
 
     //для асинхронной установки состояния и работы с предыдущим значение следует
     //также использовать колбэк как в примере ниже
@@ -122,6 +143,15 @@ const Slider = (props) => {
         <Container>
             <div className="slider w-50 m-auto">
                 <img className="d-block w-100" src="https://www.planetware.com/wpimages/2020/02/france-in-pictures-beautiful-places-to-photograph-eiffel-tower.jpg" alt="slide" />
+                
+                {/* {
+                    getSomeImages().map((url, i) => {
+                        return(<img key={i} className="d-block w-100" src={url} alt="slide" />)
+                    })
+                } */}
+
+                <Slide getSomeImages={getSomeImages}/>
+
                 <div className="text-center mt-5">Active slide {slide} <br/> 
                     {autoplay ? 'auto' : null}
                 </div>
@@ -139,6 +169,24 @@ const Slider = (props) => {
             </div>
         </Container>
     )
+}
+
+//в качестве пропса getSomeImages передадим функции getSomeImages
+const Slide = ({getSomeImages}) => {
+    
+    const [images, setImages] = useState([]);   //состояние images будет массивом
+
+    //useEffect будет вызываться только при изменении данных полученных в функции getSomeImages
+    useEffect(() => {
+        setImages(getSomeImages())
+    }, [getSomeImages])
+
+    return (
+        <>
+            {images.map((url, i) => <img key={i} className="d-block w-100" src={url} alt="slide" />)}
+        </>
+    )
+
 }
 
 
