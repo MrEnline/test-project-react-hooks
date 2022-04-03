@@ -1,4 +1,4 @@
-import {Component, useState, useEffect, useCallback} from 'react';
+import {Component, useState, useEffect, useCallback, useMemo} from 'react';
 import {Container} from 'react-bootstrap';
 import './App.css';
 
@@ -70,6 +70,11 @@ import './App.css';
 //     ]
 // }
 
+const countTotal = (num) => {
+    console.log("Counting...");
+    return num + 10;
+}
+
 const Slider = (props) => {
 
     const [slide, setSlide] = useState(0);
@@ -83,35 +88,36 @@ const Slider = (props) => {
     //[slide, ...] - массив зависимостей(по умолчанию можно не указывать). Массив параметров при изменении которых вызывается useEffect
     //если его не задать, то будет выполняться useEffect при каждом рендере
     //если [] будет пустой, то он useEffect вызовется один раз при первом рендере(действие аналогичное componentDidMount)
-    useEffect(() => {
-        console.log("effect");
-        document.title = `Slide: ${slide}`;
+    // useEffect(() => {
+    //     console.log("effect");
+    //     document.title = `Slide: ${slide}`;
 
-        window.addEventListener("click", logging);
+    //     window.addEventListener("click", logging);
 
-        //выполняет функцию типа ComponentDidUnmount - возвращает и выполняет функцию при уничтожении компонента Slider
-        //происходит сброс эффекта
-        //Если ваш эффект возвращает функцию, React выполнит её только тогда, когда наступит время сбросить эффект
-        return () => {
-            window.removeEventListener("click", logging);
-        }
+    //     //выполняет функцию типа ComponentDidUnmount - возвращает и выполняет функцию при уничтожении компонента Slider
+    //     //происходит сброс эффекта
+    //     //Если ваш эффект возвращает функцию, React выполнит её только тогда, когда наступит время сбросить эффект
+    //     return () => {
+    //         window.removeEventListener("click", logging);
+    //     }
 
-    }, [slide])
+    // }, [slide])
 
-    useEffect(() => {
-        console.log("autoplay");
-    }, [autoplay])
+    // useEffect(() => {
+    //     console.log("autoplay");
+    // }, [autoplay])
 
     function logging() {
         console.log("log");
     }
 
-    //для мемоизации функции и вызова ее столько раз, сколько нам надо, а не при каждом рендер
+   //для мемоизации функции и вызова ее столько раз, сколько нам надо, а не при каждом рендер
     //следует использовать хук useCallback и компонент, в который эта функция передается
     //см. в какой компонент передается в качестве пропса getSomeImages в данном примере
     const getSomeImages = useCallback(() => {
         console.log("fetching");
         return [
+            "https://www.planetware.com/wpimages/2020/02/france-in-pictures-beautiful-places-to-photograph-eiffel-tower.jpg",
             "https://www.planetware.com/wpimages/2022/02/france-paris-top-tourist-attractions-eiffel-tower-view.jpg",
             "https://www.planetware.com/wpimages/2021/02/france-paris-top-attractions-avenue-champs-elysees.jpg"
         ]
@@ -139,22 +145,50 @@ const Slider = (props) => {
     //     setAutoplay(state => ({...state, autoplay: !autoplay})); //приходится разбивать, чтобы не пропал slide
     // }
 
+    //если сделать так, то будет вызывать каждый раз при рендеринге
+    //чтобы вызывалось при изменении какого-либо состояния, следует использовать хук useMemo
+    //как на примере ниже
+    //const total = countTotal(slide);
+
+
+
+
+    //useMemo - запоминает последнее значение
+    //в данном случае будет вызывать только при изменении slide
+    const total = useMemo(() => {
+        return countTotal(slide);
+    }, [slide])
+
+    //при каждом рендере создается новый объект(ссылка на объект) и следовательно будет вызываться useEffect ниже
+    //т.к. он отслеживает состояние style
+    //но мы хотим, чтобы style менялся и вызывался только когда изменится slide
+    // const style = {
+    //     color: slide > 4 ? 'red' : 'black'
+    // }
+
+    //решение проблемы выше - использование хука useMemo
+    //он не будет вызываться, пока не изменяется slide, а следовательно не будет вызывать и 
+    //useEffect ниже, который зависит от изменения style
+    const style = useMemo(() => ({
+            color: slide > 4 ? 'red' : 'black'
+        }), [slide])
+
+    useEffect(() => {
+        console.log('styles')
+    }, [style])
+
+
+
     return (
         <Container>
             <div className="slider w-50 m-auto">
-                <img className="d-block w-100" src="https://www.planetware.com/wpimages/2020/02/france-in-pictures-beautiful-places-to-photograph-eiffel-tower.jpg" alt="slide" />
-                
-                {/* {
-                    getSomeImages().map((url, i) => {
-                        return(<img key={i} className="d-block w-100" src={url} alt="slide" />)
-                    })
-                } */}
 
                 <Slide getSomeImages={getSomeImages}/>
 
                 <div className="text-center mt-5">Active slide {slide} <br/> 
                     {autoplay ? 'auto' : null}
                 </div>
+                <div style={style} className="text-center mt-5">Total slide {total}</div>
                 <div className="buttons mt-3">
                     <button 
                         className="btn btn-primary me-2"
