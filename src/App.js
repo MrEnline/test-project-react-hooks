@@ -1,9 +1,9 @@
-import BaseComponent from "bootstrap/js/dist/base-component";
-import { useState, useEffect } from "react";
-import { Container } from "react-bootstrap";
-import "./App.css";
+import BaseComponent from 'bootstrap/js/dist/base-component';
+import { useState, useEffect } from 'react';
+import { Container } from 'react-bootstrap';
+import './App.css';
 
-//на входе хука компонент и функция
+//на входе компонента высшего порядка компонент BaseComponent и функция getData
 const withSlider = (BaseComponent, getData) => {
     //возвращается функция, которая возвращает компонент
     return (props) => {
@@ -23,7 +23,7 @@ const withSlider = (BaseComponent, getData) => {
                 {...props}
                 slide={slide}
                 autoplay={autoplay}
-                setSlide={setSlide}
+                changeSlide={changeSlide}
                 setAutoplay={setAutoplay}
             />
         );
@@ -80,7 +80,7 @@ const SliderSecond = (props) => {
                 />
                 <div className="text-center mt-5">
                     Active slide {props.slide} <br />
-                    {props.autoplay ? "auto" : null}{" "}
+                    {props.autoplay ? 'auto' : null}{' '}
                 </div>
                 <div className="buttons mt-3">
                     <button
@@ -109,9 +109,31 @@ const SliderSecond = (props) => {
     );
 };
 
+const SliderWithFirstFetch = withSlider(SliderFirst, getDataFromFirstFetch);
+const SliderWithSecondFetch = withSlider(SliderSecond, getDataFromSecondFetch);
+
+// обертка с дополнительной логикой в виде
+// useEffect для передаваемого компонента WrappedComponent
+// сам передаваемый компонент не изменился
+// к нему просто добавилась логика
+const withLogger = (WrappedComponent) => (props) => {
+    useEffect(() => {
+        console.log('first render');
+    }, []);
+
+    return <WrappedComponent {...props} />;
+};
+
+const Hello = () => {
+    return <h1>Hello</h1>;
+};
+
+const HelloWithLogger = withLogger(Hello);
+
 function App() {
     return (
         <>
+            <HelloWithLogger />
             <SliderFirst />
             <SliderSecond />
         </>
